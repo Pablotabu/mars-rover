@@ -1,8 +1,8 @@
 var myRover = {
   direction: 'N',
-  position: [0, 2]
+  position: [0, 2],
+  travelLog: [],
 }
-// ======================
 
 let Position = {
   X: 0,
@@ -16,7 +16,6 @@ const directions = {
   EAST: 'E'
 }
 
-// ======================
 function turnLeft(rover) {
   console.log("turnLeft was called!");
   switch (rover.direction) {
@@ -33,17 +32,9 @@ function turnLeft(rover) {
       rover.direction = directions.SOUTH;
       break;
   }
-  //console.log(rover);
-
 }
-//turnLeft(myRover)
 
-
-//function turnRight(rover){
-//}
 function turnRight(rover) {
-  console.log('turn right was called')
-  console.log('actual direction: ' + rover.direction)
   switch (rover.direction) {
     case directions.NORTH:
       rover.direction = directions.EAST;
@@ -58,58 +49,73 @@ function turnRight(rover) {
       rover.direction = directions.NORTH;
       break;
   }
-  console.log('after turning direction: ' + rover.direction);
-
 }
-//turnRight(myRover)
-
-//function moveForward(rover){
-//console.log("moveForward was called")
-//
 
 function goForward(rover) {
-  console.log('go forward was called')
-  console.log('Actual position - X:' + rover.position[0] + ' Y: ' + rover.position[1])
+  var futurePosition = [0, 0]
   switch (rover.direction) {
     case directions.NORTH:
-      rover.position[1]--;
+      futurePosition = [rover.position[0], rover.position[1] - 1];
       break;
     case directions.EAST:
-      rover.position[0]--;
+      futurePosition = [rover.position[0] + 1, rover.position[1]];
       break;
     case directions.SOUTH:
-      rover.position[1]--;
+      futurePosition = [rover.position[0], rover.position[1] + 1];
       break;
     case directions.WEST:
-      rover.position[0]--;
+      futurePosition = [rover.position[0] - 1, rover.position[1]];
       break;
   }
-  console.log('After going forward position - X:' + rover.position[0] + ' Y: ' + rover.position[1])
+  if (!checkRoverIfAfterMoveInBounds(futurePosition)) {
+    console.log('Cannot move - I would die!')
+    return;
+  }
+  if (IsThereAnObstacle(futurePosition)) {
+    console.log('cannot move because there is an obstacle!')
+    return;
+  }
+  rover.position = futurePosition;
 }
 
-//goForward(myRover);
-// function moveRover(rover) {
-//   for (var i = 0; i < rover.commands.length; i++) {
+function goBackwards(rover) {
+  var futurePosition = [0, 0]
+  switch (rover.direction) {
+    case directions.NORTH:
+      futurePosition = [rover.position[0], rover.position[1] + 1];
+      break;
+    case directions.EAST:
+      futurePosition = [rover.position[0] - 1, rover.position[1]];
+      break;
+    case directions.SOUTH:
+      futurePosition = [rover.position[0], rover.position[1] - 1];
+      break;
+    case directions.WEST:
+      futurePosition = [rover.position[0] + 1, rover.position[1]];
+      break;
+  }
+  if (!checkRoverIfAfterMoveInBounds(futurePosition)) {
+    console.log('Cannot move - I would die!')
+    return;
+  }
+  if (IsThereAnObstacle(futurePosition)) {
+    console.log('cannot move because there is an obstacle!')
+    return;
+  }
+  rover.position = futurePosition;
+}
 
-//     if (rover.commands[i] == 'r') {
-//       turnRight(rover)
-//     }
-//     if (rover.commands[i] == 'l') {
-//       turnLeft(rover);
-//     }
-//     if (rover.commands[i] == 'f') {
-//       goForward(rover);
-//     }    
-//   }
-
-//   return console.log(rover.commands);
-// }
+function checkRoverIfAfterMoveInBounds(position) {
+  const bounds = [10, 10]
+  if (position[0] > bounds[0] || position[1] > bounds[1] || position[0] < 0 || position[1] < 0)
+    return false;
+  return true;
+}
 
 function moveCommand(command, rover) {
-  console.log("Actual pos:" + rover.position[0] + ',' + rover.position[1]);
-  console.log('Actual dir:' + rover.direction);
-  for (var i = 0; i < command.length; i++) {
-    var actualCommand = command[i];
+  addPositionToLog(rover.position, rover)
+  for (let i = 0; i < command.length; i++) {
+    const actualCommand = command[i];
     switch (actualCommand) {
       case 'r':
         turnRight(rover)
@@ -119,12 +125,61 @@ function moveCommand(command, rover) {
         break;
       case 'f':
         goForward(rover);
+        addPositionToLog(rover.position, rover)
+        break;
+      case 'b':
+        goBackwards(rover)
+        addPositionToLog(rover.position, rover)
     }
   }
-  console.log("After Command pos:" + rover.position[0] + ',' + rover.position[1]);
-  console.log('After Command dir:' + rover.direction);
+  printLog(rover)
 }
 
+function printLog(rover) {
+  rover.travelLog.forEach(actualTravelLogItem => {
+    console.log(actualTravelLogItem)
+  })
+}
 
-moveCommand('frllfrfrfr', myRover);
-//goForward(myRover);
+function addPositionToLog(position, rover) {
+  var pos = [position[0], position[1]]
+  rover.travelLog.push(pos)
+}
+
+function moveCommandWithValidation(command, rover) {
+  var canMove = false;
+  for (let i = 0; i < command.length; i++) {
+    const actualCommand = command[i];
+    if (actualCommand == 'f' || actualCommand == 'b' || actualCommand == 'r' || actualCommand == 'l') {
+      canMove = true;
+    } else {
+      console.log('Command string contains invalid commands. Please review your input! Rover will not move until another command is sent.')
+      canMove = false;
+      break;
+    }
+  }
+  if (canMove) {
+    moveCommand(command, rover)
+  }
+}
+
+function IsThereAnObstacle(position) {
+  for (let i = 0; i < Obstacles.length; i++) {
+    const actualObstacle = Obstacles[i];
+    if (position[0] == actualObstacle[0] && position[1] == actualObstacle[1])
+      return true;
+  }
+  return false;
+}
+
+const Obstacles = [
+  [0, 2],
+  [5, 2],
+  [0, 3]
+]
+
+//moveCommandWithValidation('bbbbbbb', myRover);
+
+
+
+moveCommandWithValidation('bfrlbfrlfbrllbfrl', myRover)
