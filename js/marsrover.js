@@ -178,8 +178,4 @@ const Obstacles = [
   [0, 3]
 ]
 
-//moveCommandWithValidation('bbbbbbb', myRover);
-
-
-
 moveCommandWithValidation('bfrlbfrlfbrllbfrl', myRover)
